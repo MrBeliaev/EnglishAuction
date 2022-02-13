@@ -9,16 +9,11 @@ require('chai')
 contract('Auction', ([owner, user1, user2]) => {
     let auction
     let testtoken
-    let testnft
-
-    let startTime
-    let stopTime
-    let started
-    let ended    
+    let testnft    
 
     beforeEach(async () => {
         testtoken = await TestToken.new()
-        testnft = await TestNFT.new()        
+        testnft = await TestNFT.new() 
 
         auction = await Auction.new(testnft.address, 1, testtoken.address, 1000, 500, 50000)
 

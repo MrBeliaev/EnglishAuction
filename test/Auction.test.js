@@ -13,8 +13,6 @@ contract('Auction', ([owner, user1, user2]) => {
 
     let startTime
     let stopTime
-    let started
-    let ended    
 
     beforeEach(async () => {
         testtoken = await TestToken.new()
@@ -148,7 +146,7 @@ contract('Auction', ([owner, user1, user2]) => {
 
                     it('get balance', async () => {
                         result = await auction.getBalance(user2)  
-                        result.toString().should.equal("0") 
+                        result.toString().should.equal("200") 
                     })
 
                     it('End event', () => {
