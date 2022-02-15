@@ -13,6 +13,11 @@ interface IERC721 {
         address,
         uint
     ) external;
+
+    function approve(
+        address, 
+        uint256
+        ) external;
 }
 
 interface IERC20 {
@@ -38,9 +43,8 @@ interface IERC20 {
 }
 
 contract Auction {
-    event Start();
-    event Bid(address indexed sender, uint amount);
-    event Withdraw(address indexed bidder, uint amount);
+    event Bid(address indexed sender, uint amount, uint bidTime);
+    event Withdraw(address indexed bidder, uint amount, uint withdrawTime);
     event End(address winner, uint amount);
 
     address public owner;    
@@ -52,16 +56,14 @@ contract Auction {
     uint public auctionPeriod;     
     bool public started;
     bool public ended;
-    uint public bidID;
     uint public bidStep;
     address public highestBidder;
     uint public highestBid;
     uint public price;
-    mapping(uint => address) public usersAddr;
-    mapping(uint => uint) public usersBids;
     mapping(address => uint) public balances;    
 
     constructor(
+        address _owner,
         address _nftAddress,
         uint _nftId,
         address _tokenAddress,
@@ -71,7 +73,7 @@ contract Auction {
     ) {
         nftAddress = IERC721(_nftAddress);
         nftId = _nftId;
-        owner = msg.sender;
+        owner = _owner;
         highestBid = _startingBid;
         price = _startingBid;
         bidStep = _bidStep;
@@ -88,28 +90,25 @@ contract Auction {
         startTime = block.timestamp;
         stopTime = startTime + auctionPeriod;
 
-        emit Start();
     }
 
     function bid(uint _amount) external {
         require(started, "not started");
         require(block.timestamp < stopTime, "ended");
         uint totalBids = (balances[msg.sender] + _amount) - (balances[msg.sender] + _amount)%bidStep;
-        require((totalBids + bidStep) > highestBid, "value < highest");
+        require(totalBids > highestBid, "value < highest");
 
         highestBidder = msg.sender;
         if (highestBidder != address(0)) {
             
-            usersAddr[bidID] = msg.sender;
-            usersBids[bidID] = _amount;
             balances[msg.sender] += _amount;
-            bidID++;
         }
         price = (highestBid - highestBid%bidStep) + bidStep;
         highestBid = balances[msg.sender];
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
+        uint bidTime = block.timestamp;
 
-        emit Bid(msg.sender, _amount);
+        emit Bid(msg.sender, _amount, bidTime);
     }
 
     function getBalance(address _address) public view returns(uint) {
@@ -117,55 +116,12 @@ contract Auction {
     }
 
     function withdraw() external {
-        if ((stopTime - block.timestamp) > 12 hours || block.timestamp >= stopTime) {
+        require(msg.sender != highestBidder || block.timestamp >= stopTime, "highest bid");
+        require((stopTime - block.timestamp) > 24 hours || block.timestamp >= stopTime, "stopTime < 24 hours");
             IERC20(tokenAddress).transfer(msg.sender, balances[msg.sender]); 
-            emit Withdraw(msg.sender, balances[msg.sender]);
+            uint withdrawTime = block.timestamp;
+            emit Withdraw(msg.sender, balances[msg.sender], withdrawTime);
             balances[msg.sender] = 0;           
-            for (uint256 index = 0; index < bidID; index++) {
-                if (usersAddr[index] == msg.sender) {
-                    usersBids[index] = 0;
-                }
-            }
-            if (msg.sender == highestBidder) {
-                address newHighestBidder;
-                uint newHighestBid;
-                for (uint256 index = 0; index < bidID; index++) {
-                    if (newHighestBid < balances[usersAddr[index]]){
-                        newHighestBid = balances[usersAddr[index]];
-                        newHighestBidder = usersAddr[index];
-                    }
-                }
-                highestBidder = newHighestBidder;
-                highestBid = newHighestBid;
-                price = highestBid - highestBid%bidStep;
-            }         
-        } else {
-            uint amount;
-            for (uint256 index = bidID; index >= 0; index--) {                
-                if (usersAddr[index] == msg.sender) {
-                amount = usersBids[index];
-                usersBids[index] = 0;
-                break;
-                }
-            }            
-            IERC20(tokenAddress).transfer(msg.sender, amount);
-            emit Withdraw(msg.sender, amount);
-            balances[msg.sender] -= amount;
-            if (msg.sender == highestBidder) {
-                address newHighestBidder;
-                uint newHighestBid;
-                for (uint256 index = 0; index < bidID; index++) {
-                    if (newHighestBid < balances[usersAddr[index]]){
-                        newHighestBid = balances[usersAddr[index]];
-                        newHighestBidder = usersAddr[index];
-                    }
-                }
-                highestBidder = newHighestBidder;
-                highestBid = newHighestBid;
-                price = highestBid - highestBid%bidStep;
-            }         
-        }
-        
     }
 
     function end() public {
@@ -174,14 +130,12 @@ contract Auction {
         require(!ended, "ended");
 
         ended = true;
-        if (highestBidder != address(0)) {
+        if (highestBidder != owner) {
             nftAddress.safeTransferFrom(address(this), highestBidder, nftId);
             IERC20(tokenAddress).transfer(owner, price);
             balances[highestBidder] -= price;
-            for (uint256 index = 0; index < bidID; index++) {
-                if (usersAddr[index] == highestBidder) {
-                    usersBids[index] = 0;
-                }
+            if (balances[highestBidder] > 0) {
+                IERC20(tokenAddress).transfer(highestBidder, balances[highestBidder]);
             }
         } else {
             nftAddress.safeTransferFrom(address(this), owner, nftId);

@@ -9,16 +9,7 @@ module.exports = async function (deployer) {
     await deployer.deploy(TestToken);
     await deployer.deploy(AuctionFactory);
 
-    testnft = await TestNFT.new()
     testtoken = await TestToken.new()
-   
-
-    const nftAddress = testnft.address;
-    const nftId = 1;
-    const tokenAddress = testtoken.address;
-    const startingBid = 1000;
-    const bidStep = 500;
-    const auctionPeriod = 3600;
-
-    await deployer.deploy(Auction, nftAddress, nftId, tokenAddress,startingBid, bidStep, auctionPeriod);
+    testnft = await TestNFT.new()      
+    auctionfactory = await AuctionFactory.new()
 };
