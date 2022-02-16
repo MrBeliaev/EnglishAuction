@@ -1,48 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-interface IERC721 {
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint tokenId
-    ) external;
-
-    function transferFrom(
-        address,
-        address,
-        uint
-    ) external;
-
-    function approve(
-        address, 
-        uint256
-        ) external;
-}
-
-interface IERC20 {
-    function transfer(
-        address,
-        uint
-    ) external;
-
-    function transferFrom(
-        address, 
-        address, 
-        uint
-        ) external 
-        returns 
-        (bool);
-
-     function approve(
-        address, 
-        uint256
-        ) external 
-        returns 
-        (bool);
-}
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Auction {
+
     event Bid(address indexed sender, uint amount, uint bidTime);
     event Withdraw(address indexed bidder, uint amount, uint withdrawTime);
     event End(address winner, uint amount);
@@ -116,8 +79,8 @@ contract Auction {
     }
 
     function withdraw() external {
-        require(msg.sender != highestBidder || block.timestamp >= stopTime, "highest bid");
-        require((stopTime - block.timestamp) > 24 hours || block.timestamp >= stopTime, "stopTime < 24 hours");
+        require(msg.sender != highestBidder, "highest bid");
+        require(ended || (stopTime - block.timestamp) > 24 hours, "stopTime < 24 hours");
             IERC20(tokenAddress).transfer(msg.sender, balances[msg.sender]); 
             uint withdrawTime = block.timestamp;
             emit Withdraw(msg.sender, balances[msg.sender], withdrawTime);

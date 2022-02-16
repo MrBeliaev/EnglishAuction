@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/MrBeliaev/EnglishAuction/issues"
   },
-  "homepage": "https://github.com/MrBeliaev/EnglishAuction#readme"
+  "homepage": "https://github.com/MrBeliaev/EnglishAuction#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
+    "chai-as-promised": "^7.1.1"
+  }
 }

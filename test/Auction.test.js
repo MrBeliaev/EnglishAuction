@@ -63,6 +63,10 @@ contract('Auction', ([owner, user1, user2, user3]) => {
                     await auction.bid(1800, { from: user1 })    
                 })
 
+                it('fail bid', async () => {
+                    await auction.bid(300, { from: user2 }).should.be.rejectedWith("value < highest")
+                })
+
                 it('getBalance', async () => {
                     result = await auction.getBalance(user1)
                     result.toString().should.equal("3300")    
