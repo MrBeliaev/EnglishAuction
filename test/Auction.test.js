@@ -7,7 +7,7 @@ require('chai')
   .use(require('chai-as-promised'))
   .should()
 
-contract('Auction', ([owner, user1, user2]) => {
+contract('Auction', ([owner, user1, user2, user3]) => {
     let auctionfactory
     let auction
     let testtoken
@@ -22,7 +22,8 @@ contract('Auction', ([owner, user1, user2]) => {
         auction = await Auction.at(auctions[0]) 
         
         testtoken.transfer(user1, 10000, { from: owner })
-        testtoken.transfer(user2, 15000, { from: owner })       
+        testtoken.transfer(user2, 15000, { from: owner })
+        testtoken.transfer(user3, 15000, { from: owner })       
 
         await testnft.approve(auction.address, 1, { from: owner })
         })
@@ -56,6 +57,8 @@ contract('Auction', ([owner, user1, user2]) => {
                     bid = await auction.bid(1500, { from: user1 })
                     await testtoken.approve(auction.address, 2200, { from: user2 })
                     await auction.bid(2200, { from: user2 })
+                    await testtoken.approve(auction.address, 2500, { from: user3 })
+                    await auction.bid(2500, { from: user3 })
                     await testtoken.approve(auction.address, 1800, { from: user1 })
                     await auction.bid(1800, { from: user1 })    
                 })
@@ -65,6 +68,8 @@ contract('Auction', ([owner, user1, user2]) => {
                 //     result.toString().should.equal("3300")    
                 //     result2 = await auction.getBalance(user2)
                 //     result2.toString().should.equal("2200")    
+                //     result2 = await auction.getBalance(user3)
+                //     result2.toString().should.equal("2500")    
                 // })
 
                 // it('highestBidder', async () => {
@@ -130,14 +135,14 @@ contract('Auction', ([owner, user1, user2]) => {
                     // })
 
                     it('get balance', async () => {
-                        result = await auction.getBalance(user1)  
+                        result = await auction.getBalance(user3)  
                         // result.toString().should.equal("0") //800
                         console.log(result.toString())
                     })
 
                     it('withdraw', async () => {
-                        await auction.withdraw() // Error: Returned error: VM Exception while processing transaction: revert
-                        result = await auction.getBalance(user1)  
+                        await auction.withdraw({from: user3}) // Error: Returned error: VM Exception while processing transaction: revert
+                        result = await auction.getBalance(user3)  
                         // result.toString().should.equal("0")
                         console.log(result.toString())
                     })

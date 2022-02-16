@@ -9,7 +9,7 @@ module.exports = {
   },
 
   // contracts_directory: './contracts/',
-  // contracts_build_directory: './artifacts/',
+  // contracts_build_directory: './src/artifacts/', from vue.js
 
   compilers: {
     solc: {
