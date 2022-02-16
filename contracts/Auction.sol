@@ -136,6 +136,7 @@ contract Auction {
             balances[highestBidder] -= price;
             if (balances[highestBidder] > 0) {
                 IERC20(tokenAddress).transfer(highestBidder, balances[highestBidder]);
+                 balances[highestBidder] = 0;
             }
         } else {
             nftAddress.safeTransferFrom(address(this), owner, nftId);
